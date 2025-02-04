@@ -14,7 +14,7 @@ class NFeExportTest(unittest.TestCase):
 
     def test_export_efd(self):
         
-        input_dir = f"{path}\\test_data\\input\\sped_sem_assinatura"
+        input_dir = f"{path}\\test_data\\input\\higietop"
         output_dir = f"{path}\\test_data\\output"
         export_efd(input_dir, output_dir)
            

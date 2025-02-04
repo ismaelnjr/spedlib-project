@@ -211,6 +211,44 @@ EFD_Cols = {
                      "VL_RED_BC",
                      "VL_IPI",
                      "COD_OBS"],
+            
+            "D100": ["D100",
+                     "IND_OPER",
+                     "IND_EMIT",
+                     "COD_PART",    
+                     "COD_MOD",
+                     "COD_SIT",
+                     "SER",
+                     "SUB",
+                     "NUM_DOC",
+                     "CHV_NFE",
+                     "DT_DOC",
+                     "DT_A_P",
+                     "TP_CTE",
+                     "CHV_CTE_REF",
+                     "VL_DOC",
+                     "VL_DESC",
+                     "IND_FRT",
+                     "VL_SERV",
+                     "VL_BC_ICMS",
+                     "VL_ICMS",
+                     "VL_NT",
+                     "COD_INF",
+                     "COD_CTA",
+                     "COD_MUN_ORIG",
+                     "COD_MUN_DEST",
+                     "_DT_INI",
+                     "_DT_FIN"],
+            
+            "D190": ["D190",
+                     "CST_ICMS",
+                     "CFOP",
+                     "ALIQ_ICMS",
+                     "VL_OPR",
+                     "VL_BC_ICMS",
+                     "VL_ICMS",
+                     "VL_RED_BC",
+                     "COD_OBS"],
 
             "E100": ["E100",
                      "DT_INI_APUR",
@@ -514,6 +552,8 @@ class efdReader(docReader):
         efd_C100 = pd.DataFrame(columns=EFD_Cols["C100"])
         efd_C170 = pd.DataFrame(columns=EFD_Cols["C100"][:8] + ["_DT_INI", "_DT_FIN"] + EFD_Cols["C170"])
         efd_C190 = pd.DataFrame(columns=EFD_Cols["C100"][:8] + ["_DT_INI", "_DT_FIN"] + EFD_Cols["C190"])
+        efd_D100 = pd.DataFrame(columns=EFD_Cols["D100"])
+        efd_D190 = pd.DataFrame(columns=EFD_Cols["D100"][:11] + ["_DT_INI", "_DT_FIN"] + EFD_Cols["D190"])
         efd_E100 = pd.DataFrame(columns=EFD_Cols["E100"] + EFD_Cols["E110"])
         efd_E111 = pd.DataFrame(columns=["_DT_INI", "_DT_FIN"] + EFD_Cols["E111"])
         efd_E116 = pd.DataFrame(columns=EFD_Cols["E100"] + EFD_Cols["E116"])
@@ -529,6 +569,8 @@ class efdReader(docReader):
                            "C100" : efd_C100,
                            "C170" : efd_C170,
                            "C190" : efd_C190,
+                           "D100" : efd_D100,
+                           "D190" : efd_D190,
                            "E100" : efd_E100,
                            "E111" : efd_E111,
                            "E116" : efd_E116,
@@ -564,6 +606,7 @@ class efdReader(docReader):
             dt_inicio = ""
             dt_fim = ""
             row_C100 = []
+            row_D100 = []                        
             row_E100 = []
             row_E200 = []
             row_1900 = []
@@ -608,6 +651,17 @@ class efdReader(docReader):
                         head.append(dt_fim) 
                         row = head + row[1:-1]                        
                         self.efdContent["C190"].loc[len(self.efdContent["C190"])] =  row 
+                    elif row[1] == "D100":
+                        row_D100 = row[1:-1]
+                        row_D100.append(dt_inicio)
+                        row_D100.append(dt_fim)                               
+                        self.efdContent["D100"].loc[len(self.efdContent["D100"])] =  row_D100
+                    elif row[1] == "D190":
+                        head = row_D100[:11] 
+                        head.append(dt_inicio)
+                        head.append(dt_fim) 
+                        row = head + row[1:-1]                        
+                        self.efdContent["D190"].loc[len(self.efdContent["D190"])] =  row
                     elif row[1] == "E100":
                         row_E100 = row[1:-1] 
                     elif row[1] == "E110":
@@ -665,6 +719,8 @@ class efdReader(docReader):
                 self.efdContent["C100"].to_excel(writer, index=False, sheet_name="C100 - DOC")
                 self.efdContent["C170"].to_excel(writer, index=False, sheet_name="C170 - ITENS")
                 self.efdContent["C190"].to_excel(writer, index=False, sheet_name="C190 - TOTALIZADORES")
+                self.efdContent["D100"].to_excel(writer, index=False, sheet_name="D100 - TRANSPORTE")
+                self.efdContent["D190"].to_excel(writer, index=False, sheet_name="D190 - TRANSP. TOTAL")
                 self.efdContent["E100"].to_excel(writer, index=False, sheet_name="E100 - APURACAO ICMS")
                 self.efdContent["E111"].to_excel(writer, index=False, sheet_name="E111 - AJUSTES ICMS")
                 self.efdContent["E116"].to_excel(writer, index=False, sheet_name="E116 - OBRIG ICMS")

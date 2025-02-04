@@ -14,7 +14,8 @@ class NFeExportTest(unittest.TestCase):
 
     def test_export_nfe(self):
         
-        input_dir = f"{path}\\test_data\\input\\nfe"
+        #input_dir = f"{path}\\test_data\\input\\nfe"
+        input_dir = 'Z:\\10 - Estudos Viabilidade\\SINVAL\\xmls\\nfe'
         output_dir = f"{path}\\test_data\\output"
         export_nfe(input_dir, output_dir)
            
