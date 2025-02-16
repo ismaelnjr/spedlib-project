@@ -1,0 +1,14 @@
+LICENSE
+MANIFEST.in
+README.md
+setup.py
+spedlib/__init__.py
+spedlib/efd_export.py
+spedlib/efd_reader.py
+spedlib/nfe_export.py
+spedlib/nfe_reader.py
+spedlib/utils.py
+spedpy.egg-info/PKG-INFO
+spedpy.egg-info/SOURCES.txt
+spedpy.egg-info/dependency_links.txt
+spedpy.egg-info/top_level.txt

@@ -1,0 +1,3 @@
+exclude test/*
+
+exclude app.py

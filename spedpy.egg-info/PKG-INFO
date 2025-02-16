@@ -1,0 +1,27 @@
+Metadata-Version: 2.1
+Name: spedpy
+Version: 0.0.1
+Summary: Biblioteca para geração dos arquivos do Sistema Público de Escrituração Digital (SPED) para Python
+Home-page: https://github.com/Trust-Code/python-sped
+Author: Ismael Nascimento
+Author-email: ismaelnjr@icloud.com
+License: MIT License
+Keywords: sped fiscal receita federal
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+License-File: LICENSE
+
+# SPED para python
+
+Biblioteca em Python para exportaÃ§Ã£o dos arquivos do Sistema PÃºblico de EscrituraÃ§Ã£o Digital (SPED) em formato de uma planilha Excel.
+
+## Requisitos
+
+- python
+
+## Como instalar
+
+    $ pip install spedlib
