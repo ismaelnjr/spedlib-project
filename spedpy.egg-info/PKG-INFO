@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: spedpy
-Version: 0.0.1
+Version: 0.0.4
 Summary: Biblioteca para geração dos arquivos do Sistema Público de Escrituração Digital (SPED) para Python
 Home-page: https://github.com/Trust-Code/python-sped
 Author: Ismael Nascimento

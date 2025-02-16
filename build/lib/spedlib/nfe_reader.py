@@ -6,7 +6,7 @@ import pandas as pd
 
 
 # Dicionário com colunas de uma NFe
-NFE_COLUMNS = [ "NUM_NFE",
+NFE_LAYOUT = [ "NUM_NFE",
                 "SERIE",
                 "DT_EMISSAO",
                 "CHAVE_NFE",
@@ -50,7 +50,7 @@ NFE_COLUMNS = [ "NUM_NFE",
 # Classe para leitura de NFe (modelo 55)
 class NFEReader():
 
-    _data= pd.DataFrame(columns=NFE_COLUMNS) 
+    _data= pd.DataFrame(columns=NFE_LAYOUT) 
 
     def __init__(self) -> None:
         pd.options.display.float_format = "{:,.2f}".format
@@ -59,10 +59,10 @@ class NFEReader():
     def data(self) -> pd.DataFrame:
         return self._data
 
-    def _read_nfe_content(self, xml):
+    def read_file(self, filename):
         
         data = []
-        rootXML = et.parse(xml).getroot()
+        rootXML = et.parse(filename).getroot()
         
         if "nfeProc" in rootXML.tag:
                  
@@ -147,14 +147,14 @@ class NFEReader():
         xml_files = list_all_files(path, file_ext)
         return self.read_files(xml_files)
         
-    def read_files(self, xml_files: list[str]) :
+    def read_files(self, files: list[str]) :
 
         print("--- Início processamento ---")
-        print("Total de arquivos encontrados a serem processados: {}" .format(len(xml_files)))
+        print("Total de arquivos encontrados a serem processados: {}" .format(len(files)))
     
-        for xml in tqdm(xml_files, total=len(xml_files), desc="Processando xmls"):
+        for xml in tqdm(files, total=len(files), desc="Processando xmls"):
 
-            for doc in self._read_nfe_content(xml):        
+            for doc in self.read_file(xml):        
                 self._data.loc[len(self._data)] = doc        
 
         print("--- Fim processamento ---")

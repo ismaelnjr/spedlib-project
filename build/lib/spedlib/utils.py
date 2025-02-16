@@ -58,36 +58,28 @@ def list_all_files(current_dir, file_ext):
         
         return files
         
- 
-def remove_signature(input_dir, output_dir):    
 
-    # Lista todos os arquivos TXT na pasta
-    arquivos_txt = [arquivo for arquivo in os.listdir(input_dir) if arquivo.lower().endswith(".txt")]
+def remove_signature(input_file, output_file, encoding='latin-1'):    
 
-    # Processa cada arquivo
-    for arquivo in arquivos_txt:
-        caminho_arquivo = os.path.join(input_dir, arquivo)
-        with open(caminho_arquivo, "r", encoding='latin-1') as arquivo_original:
-            linhas = arquivo_original.readlines()
+    with open(input_file, "r", encoding=encoding) as arquivo_original:
+        linhas = arquivo_original.readlines()
 
-        i = 0
-        for linha in linhas:
-            if linha.startswith("|9999|"):
-                break
-            else:   
-                i+=1
+    i = 0
+    for linha in linhas:
+        if linha.startswith("|9999|"):
+            break
+        else:   
+            i+=1
         
-        # Remove a assinatura digital apos registro 9999
-        linhas = linhas[:i]
+    # Remove a assinatura digital apos registro 9999
+    linhas = linhas[:i]
+    with open(output_file, "w", encoding="latin-1") as novo_arquivo:
+        novo_arquivo.writelines(linhas)
+        print(f"Arquivo {output_file} processado. Assinatura digital removida e salva em {output_file}")
 
-        # Salva o conteúdo modificado em um novo arquivo
-        novo_caminho_arquivo = os.path.join(output_dir, f"sem_assinatura_{arquivo}")
-        with open(novo_caminho_arquivo, "w", encoding="latin-1") as novo_arquivo:
-            novo_arquivo.writelines(linhas)
+  
 
-        print(f"Arquivo {arquivo} processado. Assinatura digital removida e salva em {novo_caminho_arquivo}")
 
-    print("Processo concluído.")
 
 
 

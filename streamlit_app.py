@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from spedlib import EFDReader, EFD_LAYOUT
+from spedlib import EFDReader, EFD_LAYOUT, remove_signature
 from io import BytesIO
 import os
 from datetime import datetime
@@ -32,13 +32,16 @@ if uploaded_file:
         # Salva o arquivo carregado temporariamente
         dt = datetime.now().strftime("%Y%m%d%H%M%S")
         
-        temp_file_path = os.path.join(os.getcwd(), f"efd_data{dt}.txt")
-        with open(temp_file_path, "wb") as f:
+        temp_file = os.path.join(os.getcwd(), f"efd_data{dt}.txt")
+        with open(temp_file, "wb") as f:
             f.write(uploaded_file.read())
         
+        # Remove a assinatura digital
+        remove_signature(temp_file, temp_file)
+        
         # Processa o arquivo
-        reader.read_file(temp_file_path)
-
+        reader.read_file(temp_file)
+        
         # Lista de registros disponíveis
         available_records = list(reader.data.keys())
 
@@ -64,5 +67,5 @@ if uploaded_file:
 
     finally:
         # Remove o arquivo temporário após o processamento
-        if os.path.exists(temp_file_path):
-            os.remove(temp_file_path)
+        if os.path.exists(temp_file):
+            os.remove(temp_file)
