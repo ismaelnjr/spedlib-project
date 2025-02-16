@@ -340,13 +340,13 @@ class EFDReader():
         print("Total de arquivos encontrados a serem processados: {}" .format(len(files)))
     
         for file in tqdm(files, total=len(files), desc="Processando arquivos"): 
-            self._read_efd_file(file)        
+            self.read_file(file)        
 
         print("--- Fim processamento ---")
 
         return self._data
 
-    def _read_efd_file(self, efd_file, encoding="utf-8"):
+    def read_file(self, filename: str):
         try:
             linha = 1
             dt_inicio = ""
@@ -358,9 +358,9 @@ class EFDReader():
             row_1900 = []
             row_1910 = []
             
-            with open(efd_file, 'rt', encoding=self.encoding) as csvfile:
+            with open(filename, 'rt', encoding=self.encoding) as csvfile:
                 leitor_csv = csv.reader(csvfile, delimiter='|')
-                total_lines = sum(1 for _ in efd_file)
+                total_lines = sum(1 for _ in filename)
 
                 for row in tqdm(leitor_csv, desc="Lendo registros", total=total_lines, unit="linhas"):
                     if row[1] == "0000":

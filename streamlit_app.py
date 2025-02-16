@@ -3,6 +3,8 @@ import pandas as pd
 from spedlib import EFDReader, EFD_LAYOUT
 from io import BytesIO
 import os
+from datetime import datetime
+
 
 # Função para exportar DataFrame para Excel
 def export_to_excel(dataframes, selected_records):
@@ -28,12 +30,14 @@ if uploaded_file:
     # Lê o conteúdo do arquivo
     try:
         # Salva o arquivo carregado temporariamente
-        temp_file_path = os.path.join(os.getcwd(), "uploaded_file.txt")
+        dt = datetime.now().strftime("%Y%m%d%H%M%S")
+        
+        temp_file_path = os.path.join(os.getcwd(), f"efd_data{dt}.txt")
         with open(temp_file_path, "wb") as f:
             f.write(uploaded_file.read())
         
         # Processa o arquivo
-        reader.read_from_path(os.getcwd())
+        reader.read_file(temp_file_path)
 
         # Lista de registros disponíveis
         available_records = list(reader.data.keys())
@@ -51,7 +55,7 @@ if uploaded_file:
             st.download_button(
                 label="Baixar Excel",
                 data=excel_data,
-                file_name="registros_selecionados.xlsx",
+                file_name=f"efd_export_{dt}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
 
