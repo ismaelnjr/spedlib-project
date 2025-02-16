@@ -1,5 +1,5 @@
 @echo off
 REM Streamlit APP
 
-streamlit run app.py 
+streamlit run streamlit_app.py 
 
