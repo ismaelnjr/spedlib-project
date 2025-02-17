@@ -35,7 +35,7 @@ def export_to_excel(dataframes, selected_records):
     return output
 
 # Título do aplicativo
-st.title("Exportador de Registros SPED para Excel")
+st.title("Exportador de Registros SPED ICMS/IPI para Excel")
 
 # Upload do arquivo SPED
 uploaded_file = st.file_uploader("Carregar arquivo SPED (.txt)", type="txt")
