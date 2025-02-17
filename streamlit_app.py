@@ -5,6 +5,22 @@ from io import BytesIO
 import os
 from datetime import datetime
 
+def create_temp_file(content, filename):
+    temp_file = os.path.join(os.getcwd(), f"{filename}.efd_data")
+    # Salva o arquivo carregado temporariamente           
+    with open(temp_file, "wb") as f:
+        f.write(content)
+
+    # Remove a assinatura digital
+    remove_signature(temp_file, temp_file)
+
+    return temp_file
+
+@st.cache_data
+def read_data(file):
+    reader = EFDReader(encoding="latin-1")
+    reader.read_file(file)
+    return reader.data
 
 # Função para exportar DataFrame para Excel
 def export_to_excel(dataframes, selected_records):
@@ -24,26 +40,16 @@ st.title("Exportador de Registros SPED para Excel")
 uploaded_file = st.file_uploader("Carregar arquivo SPED (.txt)", type="txt")
 
 if uploaded_file:
-    # Instância do leitor de SPED
-    reader = EFDReader(encoding="latin-1")
 
     # Lê o conteúdo do arquivo
     try:
-        # Salva o arquivo carregado temporariamente
-        dt = datetime.now().strftime("%Y%m%d%H%M%S")
         
-        temp_file = os.path.join(os.getcwd(), f"efd_data{dt}.txt")
-        with open(temp_file, "wb") as f:
-            f.write(uploaded_file.read())
+        temp_file = create_temp_file(uploaded_file.read(), uploaded_file.name)
         
-        # Remove a assinatura digital
-        remove_signature(temp_file, temp_file)
-        
-        # Processa o arquivo
-        reader.read_file(temp_file)
+        data = read_data(temp_file)
         
         # Lista de registros disponíveis
-        available_records = list(reader.data.keys())
+        available_records = list(data.keys())
 
         # Seletor de registros
         selected_records = st.multiselect(
@@ -51,10 +57,10 @@ if uploaded_file:
             options=available_records,
             default=available_records
         )
-
+        dt = datetime.now().strftime("%Y%m%d%H%M%S")
         # Botão para exportar
         if st.button("Exportar para Excel"):
-            excel_data = export_to_excel(reader.data, selected_records)
+            excel_data = export_to_excel(data, selected_records)
             st.download_button(
                 label="Baixar Excel",
                 data=excel_data,

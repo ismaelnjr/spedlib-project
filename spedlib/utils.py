@@ -75,7 +75,7 @@ def remove_signature(input_file, output_file, encoding='latin-1'):
     linhas = linhas[:i]
     with open(output_file, "w", encoding="latin-1") as novo_arquivo:
         novo_arquivo.writelines(linhas)
-        print(f"Arquivo {output_file} processado. Assinatura digital removida e salva em {output_file}")
+        print(f"Assinatura digital removida e salva em {output_file}")
 
   
 

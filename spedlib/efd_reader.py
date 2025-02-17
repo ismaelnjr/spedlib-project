@@ -330,6 +330,9 @@ class EFDReader():
     def data(self) -> dict[str, pd.DataFrame]:
         return self._data
 
+    def is_empty(self) -> bool:
+        return self._data["0000"].empty
+
     def read_from_path(self, path, file_ext = ".txt"):
         efd_files = list_all_files(path, file_ext)
         return self.read_files(efd_files)
