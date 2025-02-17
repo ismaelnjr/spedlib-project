@@ -5,6 +5,7 @@ from io import BytesIO
 import os
 from datetime import datetime
 
+@st.cache_resource
 def create_temp_file(content, filename):
     temp_file = os.path.join(os.getcwd(), f"{filename}.efd_data")
     # Salva o arquivo carregado temporariamente           
