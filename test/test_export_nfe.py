@@ -9,7 +9,8 @@ os.chdir(path)
 sys.path.insert(0, os.path.dirname(path))
 sys.path.insert(0, path)
 
-from spedlib import NFEReader, NFeExport
+from spedlib.nfe_reader import NFEReader
+from spedlib.nfe_export import NFeExport
 
 class NFeExportTest(unittest.TestCase):
 
@@ -17,6 +18,7 @@ class NFeExportTest(unittest.TestCase):
         
         nfe_reader = NFEReader()
         input_dir = f"{path}\\test_data\\input\\nfe"
+        
         output_dir = f"{path}\\test_data\\output"
         nfe_reader.read_from_path(input_dir)
         

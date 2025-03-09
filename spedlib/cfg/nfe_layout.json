@@ -1,0 +1,232 @@
+{
+    "ns": "http://www.portalfiscal.inf.br/nfe",
+    "versao": "4.00",
+    "columns": {
+        "NUM_NFE": {
+            "path": "./ns:NFe/ns:infNFe/ns:ide/ns:nNF",
+            "type": "int",
+            "group": "cabecalho"
+        },
+        "SERIE": {
+            "path": "./ns:NFe/ns:infNFe/ns:ide/ns:serie",
+            "type": "int",
+            "group": "cabecalho"
+        },
+        "COD_UF_EMIT": {
+            "path": "./ns:NFe/ns:infNFe/ns:ide/ns:cUF",
+            "type": "int",
+            "length": 2,
+            "group": "cabecalho"
+        },
+        "DT_EMISSAO": {
+            "path": "./ns:NFe/ns:infNFe/ns:ide/ns:dhEmi",
+            "type": "string",
+            "parser": "date_parser",
+            "group": "cabecalho"
+        },        
+        "CHAVE_NFE": {
+            "path": "./ns:protNFe/ns:infProt/ns:chNFe",
+            "type": "string",
+            "length": 44,
+            "group": "cabecalho"
+        },
+        "TIPO_NFE": {
+            "path": "./ns:NFe/ns:infNFe/ns:ide/ns:tpNF",
+            "type": "string",
+            "length": 1,
+            "group": "cabecalho"
+        },
+        "CNPJ_EMIT": {
+            "path": "./ns:NFe/ns:infNFe/ns:emit/ns:CNPJ",
+            "type": "string",
+            "length": 14,
+            "group": "cabecalho"
+        },
+        "NOME_EMIT": {
+            "path": "./ns:NFe/ns:infNFe/ns:emit/ns:xNome",
+            "type": "string",
+            "length": 60,
+            "group": "cabecalho"
+        },
+        "CNPJ_DEST": {
+            "path": "./ns:NFe/ns:infNFe/ns:dest/ns:CNPJ",
+            "type": "string",
+            "length": 14,
+            "group": "cabecalho"
+        },
+        "CPF_DEST": {
+            "path": "./ns:NFe/ns:infNFe/ns:dest/ns:CPF",
+            "type": "string",  
+            "length": 8,
+            "group": "cabecalho"
+        },
+        "NOME_DEST": {
+            "path": "./ns:NFe/ns:infNFe/ns:dest/ns:xNome",
+            "type": "string",
+            "length": 60,
+            "group": "cabecalho"
+        },
+        "UF": {
+            "path": "./ns:NFe/ns:infNFe/ns:dest/ns:enderDest/ns:UF",
+            "type": "string",
+            "length": 2,
+            "group": "cabecalho"
+        },
+        "VALOR_NFE": {
+            "path": "./ns:NFe/ns:infNFe/ns:total/ns:ICMSTot/ns:vNF",
+            "type": "float",
+            "group": "cabecalho"
+        },
+        "NUM_ITEM": {
+            "atrib": "nItem",
+            "type": "int",
+            "group": "item"
+        },
+        "COD_PROD": {
+            "path": "./ns:prod/ns:cProd",
+            "type": "string",
+            "length": 60,
+            "group": "item"
+        },
+        "DESC_PROD": {
+            "path": "./ns:prod/ns:xProd",
+            "type": "string",        
+            "length": 120,
+            "group": "item"
+        },
+        "NCM": {
+            "path": "./ns:prod/ns:NCM",
+            "type": "string",
+            "length": 8,
+            "group": "item"
+        },
+        "CEST": {
+            "path": "./ns:prod/ns:CEST",
+            "type": "string",
+            "length": 7,
+            "group": "item"
+        },
+        "CFOP": {
+            "path": "./ns:prod/ns:CFOP",
+            "type": "string",
+            "length": 4,
+            "group": "item"
+        },
+        "UNID": {
+            "path": "./ns:prod/ns:uCom",
+            "type": "string",
+            "length": 6,
+            "group": "item"
+        },
+        "VLR_UNIT": {
+            "path": "./ns:prod/ns:vUnCom",
+            "type": "float",
+            "group": "item"
+        },
+        "QTDE": {
+            "path": "./ns:prod/ns:qCom",
+            "type": "float",
+            "group": "item"
+        },
+        "VLR_PROD": {
+            "path": "./ns:prod/ns:vProd",
+            "type": "float",
+            "group": "item"
+        },
+        "FRETE": {
+            "path": "./ns:prod/ns:vFrete",
+            "type": "float",
+            "group": "item"
+        },
+        "SEGURO": {
+            "path": "./ns:prod/ns:vSeg",
+            "type": "float",
+            "group": "item"
+        },
+        "DESC": {
+            "path": "./ns:prod/ns:vDesc",
+            "type": "float",
+            "group": "item"
+        },
+        "OUTROS": {
+            "path": "./ns:prod/ns:vOutro",
+            "type": "float",
+            "group": "item"
+        },
+        "TOTAL_ITEM": {
+            "function": "calculate_total_item",
+            "args": ["VLR_PROD", "FRETE", "SEGURO", "DESC", "OUTROS"],
+            "type": "float",
+            "group": "item"
+        },
+        "ORIGEM": {
+            "path": ".ns:imposto/ns:ICMS//ns:orig",
+            "type": "string",
+            "length": 1,
+            "group": "imposto"
+        },
+        "CST": {
+            "path": "./ns:imposto/ns:ICMS//ns:CST",
+            "type": "string",
+            "length": 3,
+            "group": "imposto"
+        },
+        "CSOSN": {
+            "path": "./ns:imposto/ns:ICMS//ns:CSOSN",
+            "type": "string",
+            "length": 3,
+            "group": "imposto"
+        },
+        "BC_ICMS": {
+            "path": "./ns:imposto/ns:ICMS//ns:vBC",
+            "type": "float",
+            "group": "imposto"
+        },
+        "ALQ_ICMS": {
+            "path": "./ns:imposto/ns:ICMS//ns:pICMS",
+            "type": "float",
+            "group": "imposto"
+        },
+        "VLR_ICMS": {
+            "path": "./ns:imposto/ns:ICMS//ns:vICMS",
+            "type": "float",
+            "group": "imposto"
+        },
+        "BC_ICMS_ST": {
+            "path": "./ns:imposto/ns:ICMS//ns:vBCST",
+            "type": "float",
+            "group": "imposto"
+        },
+        "ALQ_ICMS_ST": {
+            "path": "./ns:imposto/ns:ICMS//ns:pICMSST",
+            "type": "float",
+            "group": "imposto"
+        },
+        "VLR_ICMS_ST": {
+            "path": "./ns:imposto/ns:ICMS//ns:vICMSST",
+            "type": "float",
+            "group": "imposto"
+        },
+        "ALQ_IPI": {
+            "path": "./ns:imposto/ns:IPI//ns:pIPI",
+            "type": "float",
+            "group": "imposto"
+        },
+        "VLR_IPI": {
+            "path": "./ns:imposto/ns:IPI//ns:vIPI",
+            "type": "float",
+            "group": "imposto"
+        },
+        "MES_ANO": {
+            "function": "calculate_mes_ano",
+            "args": ["DT_EMISSAO"],
+            "type": "string",
+            "group": "finalizador"
+        },
+        "DATA_IMPORTACAO": {
+            "function": "now",
+            "type": "string",
+            "group": "finalizador"
+        }
+    }    
+}

@@ -3,9 +3,9 @@ from spedlib.nfe_reader import NFEReader
 import os
 
 
-class NFeExport:
+class NFeExport:    
     
-    def __init__(self, nfe_reader: NFEReader) -> None:
+    def __init__(self, nfe_reader: NFEReader = None) -> None:
         self.nfe_reader = nfe_reader
 
     def to_excel(self, filename):

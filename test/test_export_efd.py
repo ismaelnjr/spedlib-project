@@ -9,7 +9,8 @@ os.chdir(path)
 sys.path.insert(0, os.path.dirname(path))
 sys.path.insert(0, path)
 
-from spedlib import EFDExport, EFDReader
+from spedlib.efd_export import EFDExport
+from spedlib.efd_reader import EFDReader
 
 class NFeExportTest(unittest.TestCase):
 
@@ -17,6 +18,7 @@ class NFeExportTest(unittest.TestCase):
         
         efd_reader = EFDReader(encoding="latin-1")
         input_dir = f"{path}\\test_data\\input\\sped"
+        
         output_dir = f"{path}\\test_data\\output"
         efd_reader.read_from_path(input_dir)        
         

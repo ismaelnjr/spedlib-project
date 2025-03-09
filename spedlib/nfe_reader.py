@@ -1,162 +1,135 @@
-from tqdm import tqdm
-from datetime import date
-from .utils import check_float, check_none, format_cnpj, format_cpf, list_all_files
-import xml.etree.ElementTree as et
+import json
+import xml.etree.ElementTree as ET
+import os
 import pandas as pd
 
+from datetime import date
+from tqdm import tqdm
+from .utils import format_cnpj, format_cpf, list_all_files
 
-# Dicionário com colunas de uma NFe
-NFE_LAYOUT = [ "NUM_NFE",
-                "SERIE",
-                "DT_EMISSAO",
-                "CHAVE_NFE",
-                "TIPO_NFE",
-                "CNPJ_EMIT",
-                "NOME_EMIT",
-                "CNPJ_DEST",
-                "CPF_DEST",
-                "NOME_NOME_DEST",
-                "UF",
-                "VALOR_NFE",
-                "NITEM",
-                "COD_PROD",
-                "DESC_PROD",
-                "NCM","CFOP",
-                "UNID",
-                "VLR_UNIT",
-                "QTDE",
-                "VLR_PROD",
-                "FRETE",
-                "SEGURO",
-                "DESC",
-                "OUTROS",
-                "T_ITEM",
-                "ORIGEM",
-                "CST_ICMS",
-                "BC_ICMS",
-                "ALQ_ICMS",
-                "ICMS",
-                "MVA",
-                "BC_ICMSST",
-                "ALQ_ICMSST",
-                "ICMSST",
-                "CST_IPI",
-                "IPI",
-                "STATUS_NFE", 
-                "MES_ANO",
-                "DATA_IMPORTACAO"]
 
-     
-# Classe para leitura de NFe (modelo 55)
-class NFEReader():
+path = os.path.dirname(os.path.abspath(__file__))
 
-    _data= pd.DataFrame(columns=NFE_LAYOUT) 
+# Carregar layout da NFe
+def load_nfe_layout(json_path):
+    print(os.getcwd())
+    with open(json_path, 'r', encoding='utf-8') as f:
+        return json.load(f)
 
-    def __init__(self) -> None:
+NFE_LAYOUT_CONFIG = load_nfe_layout(f'{path}\\cfg\\nfe_layout.json')
+
+def get_columns_by_group(group: list):
+    return [(col, config) for col, config in NFE_LAYOUT_CONFIG["columns"].items() if config["group"] in group]
+
+# Funções auxiliares
+def parse_element(element, value_type):
+    if element is None:
+        return "" if value_type == "string" else 0
+    try:
+        if value_type == "int":
+            return int(element.text)
+        elif value_type == "float":
+            return float(element.text)
+        elif value_type == "string":
+            return element.text
+    except:
+        return "" if value_type == "string" else 0
+
+def date_parser(value):
+    if value:
+        return f"{value[8:10]}/{value[5:7]}/{value[:4]}"
+    return ""
+
+def calculate_total_item(vProd, vFrete, vSeguro, vDesc, vOutros):
+    return vProd + vFrete + vSeguro- vDesc + vOutros
+
+def calculate_mes_ano(date_str):
+    return f"{date_str[-4:]}_{date_str[3:5]}"
+
+FUNCTIONS = {
+    "calculate_total_item": calculate_total_item,
+    "calculate_mes_ano": calculate_mes_ano,
+    "now": lambda: date.today().strftime('%d/%m/%Y')
+}
+
+PARSERS = {
+    "date_parser": date_parser,
+    "cnpj_parser": format_cnpj,
+    "cpf_parser": format_cpf
+}
+
+# Classe de leitura da NFe
+class NFEReader:
+    
+    def __init__(self):
         pd.options.display.float_format = "{:,.2f}".format
-
+        self._data = None
+        
     @property
-    def data(self) -> pd.DataFrame:
+    def data(self):
         return self._data
+    
+    def read_nfe(self, filename):
 
-    def read_file(self, filename):
+        rootXML = ET.parse(filename).getroot()
+        nsNFe = {"ns": NFE_LAYOUT_CONFIG["ns"]}
         
         data = []
-        rootXML = et.parse(filename).getroot()
-        
         if "nfeProc" in rootXML.tag:
-                 
-            nsNFe = {"ns": "http://www.portalfiscal.inf.br/nfe"}
-
-            # DADOS DA NFE        
-            numNFe = check_none(rootXML.find("./ns:NFe/ns:infNFe/ns:ide/ns:nNF" , nsNFe))
-            serie = check_none(rootXML.find("./ns:NFe/ns:infNFe/ns:ide/ns:serie", nsNFe))
-            dataEmissao = check_none(rootXML.find("./ns:NFe/ns:infNFe/ns:ide/ns:dhEmi", nsNFe))
-            dataEmissao = F"{dataEmissao[8:10]}/{dataEmissao[5:7]}/{dataEmissao[:4]}"
-            if check_none(rootXML.find("./ns:NFe/ns:infNFe/ns:ide/ns:tpNF", nsNFe)) == 0:
-                tpNF = "ENTRADA"
-            else:
-                tpNF = "SAIDA"
-            
-            mesAno = F"{dataEmissao[-4:]}_{dataEmissao[3:5]}"
-            
-            chave = check_none(rootXML.find("./ns:protNFe/ns:infProt/ns:chNFe", nsNFe))
-            cnpjEmit = format_cnpj (check_none(rootXML.find("./ns:NFe/ns:infNFe/ns:emit/ns:CNPJ", nsNFe)))
-            nomeEmit = check_none(rootXML.find("./ns:NFe/ns:infNFe/ns:emit/ns:xNome", nsNFe))
-            
-            cnpjDest = format_cnpj(check_none(rootXML.find("./ns:NFe/ns:infNFe/ns:dest/ns:CNPJ", nsNFe)))
-            cpfDest = format_cpf (check_none(rootXML.find("./ns:NFe/ns:infNFe/ns:dest/ns:CPF", nsNFe)))
-            nomeDest = check_none(rootXML.find("./ns:NFe/ns:infNFe/ns:dest/ns:xNome", nsNFe))
-        
-            uf = check_none(rootXML.find("./ns:NFe/ns:infNFe/ns:dest/ns:enderDest/ns:UF", nsNFe))
-
-            valorNFe = check_none(rootXML.find("./ns:NFe/ns:infNFe/ns:total/ns:ICMSTot/ns:vNF", nsNFe))
-            dataImport = date.today()
-            dataImport = dataImport.strftime('%d/%m/%Y')
-
-            # DADOS DO ITEM        
-            i = 1
-
-            for item in rootXML.findall("./ns:NFe/ns:infNFe/ns:det", nsNFe):
-                #idxItem = item.attrib["nItem"]
-                idxItem = i
-                cProd = check_none(item.find(".ns:prod/ns:cProd", nsNFe))
-                descricao = check_none(item.find(".ns:prod/ns:xProd", nsNFe))
-                ncm = check_none(item.find(".ns:prod/ns:NCM", nsNFe))
-                cfop = check_none(item.find(".ns:prod/ns:CFOP", nsNFe))
-                vUnitario = check_float(item.find(".ns:prod/ns:vUnCom", nsNFe))
-                qtde = check_float(item.find(".ns:prod/ns:qCom", nsNFe))
-                unidade = check_none(item.find(".ns:prod/ns:uCom", nsNFe))
-                vProd = check_float(item.find(".ns:prod/ns:vProd", nsNFe))
-                vFrete = check_float(item.find(".ns:prod/ns:vFrete", nsNFe))
-                vSeguro = check_float(item.find(".ns:prod/ns:vSeg", nsNFe))
-                vDesconto = check_float(item.find(".ns:prod/ns:vDesc", nsNFe))
-                vOutros = check_float(item.find(".ns:prod/ns:vOutro", nsNFe))
-                vTotalItem = vProd + vFrete - vDesconto + vOutros
-                origem = check_none(item.find(".ns:imposto/ns:ICMS//ns:orig", nsNFe))
-
-                cICMS = check_none(item.find(".ns:imposto/ns:ICMS//ns:CSOSN", nsNFe))
-                if cICMS == "":
-                    cICMS = check_none(item.find(".ns:imposto/ns:ICMS//ns:CST", nsNFe))
-
-                vBC = check_float(item.find(".ns:imposto/ns:ICMS//ns:vBC", nsNFe))
-                pICMS = check_float(item.find(".ns:imposto/ns:ICMS//ns:pICMS", nsNFe))
-                vICMS = check_float(item.find(".ns:imposto/ns:ICMS//ns:vICMS", nsNFe))
-
-                pMVAST = check_float(item.find(".ns:imposto/ns:ICMS//ns:pMVAST", nsNFe))
-                vBCST = check_float(item.find(".ns:imposto/ns:ICMS//ns:vBCST", nsNFe))
-                pICMSST = check_float(item.find(".ns:imposto/ns:ICMS//ns:pICMSST", nsNFe))
-                vICMSST = check_float(item.find(".ns:imposto/ns:ICMS//ns:vICMSST", nsNFe))
-
-                cIPI = check_none(item.find(".ns:imposto/ns:IPI//ns:CST", nsNFe))
-                vIPI = check_float(item.find(".ns:imposto/ns:IPI//ns:vIPI", nsNFe))
-
-                statusNFe = "AUTORIZADA"
+            nfe_data = {}
+            for col, config in get_columns_by_group(["cabecalho"]):
                 
-                item = [numNFe, serie, dataEmissao, chave, tpNF, cnpjEmit, nomeEmit, cnpjDest, cpfDest, nomeDest, uf, valorNFe, 
-                        idxItem, cProd, descricao, ncm, cfop, unidade, vUnitario, qtde, vProd, vFrete, vSeguro, vDesconto, vOutros, vTotalItem,
-                        origem, cICMS, vBC, pICMS, vICMS, pMVAST, vBCST, pICMSST, vICMSST,
-                        cIPI, vIPI, statusNFe, mesAno, dataImport]
+                if config.get("atrib"):
+                    value = item.attrib.get(config["atrib"])
+                    item_data[col] = value       
+                elif config.get("path"):
+                    element = rootXML.find(config["path"], nsNFe)
+                    value = parse_element(element, config["type"])
+                    nfe_data[col] = value                    
+                elif config.get("function"):
+                    args = [nfe_data.get(arg, 0) for arg in config.get("args", [])]
+                    nfe_data[col] = FUNCTIONS[config["function"]](*args)
 
-                data.append(item)
-                i+=1
-            
+                if config.get("parser"):
+                    nfe_data[col] = PARSERS[config["parser"]](nfe_data[col])
+
+            # Informações dos produtos
+            for idx, item in enumerate(rootXML.findall("./ns:NFe/ns:infNFe/ns:det", nsNFe)):
+                item_data = nfe_data.copy()
+                
+                for col, config in get_columns_by_group(["item", "imposto", "finalizador"]):
+                    
+                    if config.get("atrib"):
+                        value = item.attrib.get(config["atrib"])
+                        item_data[col] = value                        
+                    elif config.get("path"):
+                        element = item.find(config["path"], nsNFe)
+                        value = parse_element(element, config["type"])
+                        item_data[col] = value                    
+                    elif config.get("function"):
+                        args = [item_data.get(arg, 0) for arg in config.get("args", [])]
+                        item_data[col] = FUNCTIONS[config["function"]](*args)
+                    
+                    if config.get("parser"):
+                        item_data[col] = PARSERS[config["parser"]](item_data[col])
+
+                data.append(item_data)    
         return data
 
-    def read_from_path(self, path, file_ext = ".xml"):
-        xml_files = list_all_files(path, file_ext)
-        return self.read_files(xml_files)
-        
-    def read_files(self, files: list[str]) :
-
+    def read_all(self, files, verbose=True):
         print("--- Início processamento ---")
-        print("Total de arquivos encontrados a serem processados: {}" .format(len(files)))
-    
-        for xml in tqdm(files, total=len(files), desc="Processando xmls"):
-
-            for doc in self.read_file(xml):        
-                self._data.loc[len(self._data)] = doc        
-
+        print(f"Total de arquivos encontrados a serem processados: {len(files)}")
+        
+        data = []
+        for xml in tqdm(files, total=len(files), desc="Processando xmls", disable=not verbose):
+            for doc in self.read_nfe(xml):
+                data.append(doc)
+        
         print("--- Fim processamento ---")
+        return data
 
     
+    def read_from_path(self, path, file_ext=".xml"):
+        xml_files = list_all_files(path, file_ext)
+        self._data = pd.DataFrame(self.read_all(xml_files), columns=NFE_LAYOUT_CONFIG["columns"])
+        return self.data 

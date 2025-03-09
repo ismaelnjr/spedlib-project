@@ -8,7 +8,7 @@ os.chdir(path)
 sys.path.insert(0, os.path.dirname(path))
 sys.path.insert(0, path)
 
-from spedlib import remove_signature, list_all_files
+from spedlib.utils import remove_efd_signature, list_all_files
 
 class NFeExportTest(unittest.TestCase):
 
@@ -20,7 +20,7 @@ class NFeExportTest(unittest.TestCase):
         files = list_all_files(input_dir, ".txt")
         for file in files:
             output_file = os.path.join(output_dir, "sem_assinatura_" + os.path.basename(file))
-            remove_signature(file, output_file)
+            remove_efd_signature(file, output_file)
         
         self.assertTrue(os.path.exists(output_file))        
            

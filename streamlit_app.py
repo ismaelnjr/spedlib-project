@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from spedlib import EFDReader, EFD_LAYOUT, remove_signature
+from spedlib import EFDReader, EFD_LAYOUT, remove_efd_signature
 from io import BytesIO
 import os
 from datetime import datetime
@@ -13,7 +13,7 @@ def create_temp_file(content, filename):
         f.write(content)
 
     # Remove a assinatura digital
-    remove_signature(temp_file, temp_file)
+    remove_efd_signature(temp_file, temp_file)
 
     return temp_file
 
