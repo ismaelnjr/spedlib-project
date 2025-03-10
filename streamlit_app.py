@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
-from spedlib import EFDReader, EFD_LAYOUT, remove_efd_signature
+from spedlib.efd_reader import EFDReader, EFD_LAYOUT
+from spedlib.utils import remove_efd_signature
 from io import BytesIO
 import os
 from datetime import datetime
