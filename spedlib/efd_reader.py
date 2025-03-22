@@ -242,6 +242,32 @@ EFD_LAYOUT = {
                      "PROC",
                      "TXT_COMPL",
                      "MES_REF"], "E250 - OBRIG ICMS-ST"],
+            
+            "H005": [["H005",
+                     "DT_INV",
+                     "VL_INV",
+                     "MOT_INV"], "H005 - TOTAIS INVENTARIO"],
+            
+            "H010": [["H010",
+                     "COD_ITEM",
+                     "UNID",
+                     "QTD",
+                     "VL_UNIT",
+                     "VL_ITEM",
+                     "IND_PROP",
+                     "COD_PART",
+                     "TXT_COMPL",
+                     "COD_CTA",
+                     "VL_ITEM_IR",
+                     "_DT_INI",
+                     "_DT_FIN",], "H010 - INVENTARIO"],
+            
+            "H020": [["H020",
+                     "CST_ICMS",
+                     "BC_ICMS",
+                     "VL_ICMS",
+                     "_DT_INI",
+                     "_DT_FIN",], "H020 - INF COMPL INV"],
 
             "1900": [["1900",
                      "IND_APUR_ICMS",
@@ -305,6 +331,8 @@ class EFDReader():
         efd_E116 = pd.DataFrame(columns=EFD_LAYOUT["E100"][0] + EFD_LAYOUT["E116"][0])
         efd_E200 = pd.DataFrame(columns=EFD_LAYOUT["E200"][0] + EFD_LAYOUT["E210"][0])
         efd_E250 = pd.DataFrame(columns=EFD_LAYOUT["E200"][0] + EFD_LAYOUT["E250"][0])
+        efd_H005 = pd.DataFrame(columns=EFD_LAYOUT["H005"][0])
+        efd_H010 = pd.DataFrame(columns=EFD_LAYOUT["H010"][0])
         efd_1900 = pd.DataFrame(columns=EFD_LAYOUT["1900"][0] + EFD_LAYOUT["1910"][0] + EFD_LAYOUT["1920"][0])
         efd_1921 = pd.DataFrame(columns=["_DT_INI", "_DT_FIN"] + EFD_LAYOUT["1921"][0])
         efd_1926 = pd.DataFrame(columns=["_DT_INI", "_DT_FIN"] + EFD_LAYOUT["1926"][0])
@@ -322,6 +350,8 @@ class EFDReader():
                            "E116" : efd_E116,
                            "E200" : efd_E200,
                            "E250" : efd_E250,
+                           "H005" : efd_H005,
+                           "H010" : efd_H010,
                            "1900" : efd_1900,
                            "1921" : efd_1921,
                            "1926" : efd_1926}
@@ -433,6 +463,14 @@ class EFDReader():
                     elif row[1] == "E250":
                         row = row_E200 + row[1:-1] 
                         self._data["E250"].loc[len(self._data["E250"])] =  row 
+                    elif row[1] == "H005":
+                        row = row[1:-1]
+                        self._data["H005"].loc[len(self._data["H005"])] =  row
+                    elif row[1] == "H010":
+                        row = row[1:-1]
+                        row.append(dt_inicio)
+                        row.append(dt_fim)
+                        self._data["H010"].loc[len(self._data["H010"])] =  row
                     elif row[1] == "1900":
                         row_1900 = row[1:-1] 
                     elif row[1] == "1910":

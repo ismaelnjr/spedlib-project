@@ -14,7 +14,7 @@ class NFeExportTest(unittest.TestCase):
 
     def test_remove_signature(self):
         
-        input_dir = f"{path}\\test_data\\input\\sped"
+        input_dir = f"{path}\\test_data\\input\\sped"        
         output_dir = f"{path}\\test_data\\output"
         
         files = list_all_files(input_dir, ".txt")

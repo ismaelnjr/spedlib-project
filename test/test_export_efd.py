@@ -18,7 +18,7 @@ class NFeExportTest(unittest.TestCase):
         
         efd_reader = EFDReader(encoding="latin-1")
         input_dir = f"{path}\\test_data\\input\\sped"
-        
+                
         output_dir = f"{path}\\test_data\\output"
         efd_reader.read_from_path(input_dir)        
         
