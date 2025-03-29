@@ -17,7 +17,8 @@ class NFeExportTest(unittest.TestCase):
     def test_export_nfe(self):
         
         nfe_reader = NFEReader()
-        input_dir = f"{path}\\test_data\\input\\nfe"
+        #input_dir = f"{path}\\test_data\\input\\nfe"
+        input_dir = f"T:\\XML EMPRESAS ATIVAS\\ACQUALIMP\\2024\\09.2024\\SAIDAS SIEG"
         
         output_dir = f"{path}\\test_data\\output"
         nfe_reader.read_from_path(input_dir)

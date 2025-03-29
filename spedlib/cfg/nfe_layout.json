@@ -217,6 +217,48 @@
             "type": "float",
             "group": "imposto"
         },
+        "CST_PIS": {
+            "path": "./ns:imposto/ns:PIS//ns:PISAliq//ns:CST",
+            "type": "string",
+            "length": 3,
+            "group": "imposto"
+        },
+        "BC_PIS": {
+            "path": "./ns:imposto/ns:PIS//ns:PISAliq//ns:vBC",
+            "type": "float",
+            "group": "imposto"
+        },
+        "ALIQ_PIS": {
+            "path": "./ns:imposto/ns:PIS//ns:PISAliq//ns:pPIS",
+            "type": "float",
+            "group": "imposto"
+        },
+        "VLR_PIS": {
+            "path": "./ns:imposto/ns:PIS//ns:PISAliq//ns:vPIS",
+            "type": "float",
+            "group": "imposto"
+        },
+        "CST_COFINS": {
+            "path": "./ns:imposto/ns:COFINS//ns:COFINSAliq//ns:CST",
+            "type": "string",
+            "length": 3,
+            "group": "imposto"
+        },
+        "BC_COFINS": {
+            "path": "./ns:imposto/ns:COFINS//ns:COFINSAliq//ns:vBC",
+            "type": "float",
+            "group": "imposto"
+        },
+        "ALIQ_COFINS": {
+            "path": "./ns:imposto/ns:COFINS//ns:COFINSAliq//ns:pCOFINS",
+            "type": "float",
+            "group": "imposto"
+        },
+        "VLR_COFINS": {
+            "path": "./ns:imposto/ns:COFINS//ns:COFINSAliq//ns:vCOFINS",
+            "type": "float",
+            "group": "imposto"
+        },
         "MES_ANO": {
             "function": "calculate_mes_ano",
             "args": ["DT_EMISSAO"],
