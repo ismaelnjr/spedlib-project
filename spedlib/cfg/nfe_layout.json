@@ -207,6 +207,21 @@
             "type": "float",
             "group": "imposto"
         },
+        "CST_IPI": {
+            "paths": [
+              "./ns:imposto/ns:IPI/ns:IPITrib/ns:CST",
+              "./ns:imposto/ns:IPI/ns:IPINT/ns:CST"
+            ],
+            "type": "string",
+            "length": 3,
+            "group": "imposto",
+            "default": "99"
+        },
+        "BC_IPI": {
+            "path": "./ns:imposto/ns:IPI//ns:vBC",
+            "type": "float",
+            "group": "imposto"
+        },
         "ALQ_IPI": {
             "path": "./ns:imposto/ns:IPI//ns:pIPI",
             "type": "float",
@@ -218,44 +233,73 @@
             "group": "imposto"
         },
         "CST_PIS": {
-            "path": "./ns:imposto/ns:PIS//ns:PISAliq//ns:CST",
+            "paths": [
+              "./ns:imposto/ns:PIS/ns:PISAliq/ns:CST",
+              "./ns:imposto/ns:PIS/ns:PISNT/ns:CST",
+              "./ns:imposto/ns:PIS/ns:PISOutr/ns:CST",
+              "./ns:imposto/ns:PIS/ns:PISQtde/ns:CST"
+            ],
             "type": "string",
             "length": 3,
             "group": "imposto"
         },
         "BC_PIS": {
-            "path": "./ns:imposto/ns:PIS//ns:PISAliq//ns:vBC",
+            "paths": [
+              "./ns:imposto/ns:PIS/ns:PISAliq/ns:vBC",
+              "./ns:imposto/ns:PIS/ns:PISOutr/ns:vBC"
+            ],
             "type": "float",
             "group": "imposto"
-        },
+          },
         "ALIQ_PIS": {
-            "path": "./ns:imposto/ns:PIS//ns:PISAliq//ns:pPIS",
+            "paths": [
+              "./ns:imposto/ns:PIS/ns:PISAliq/ns:pPIS",
+              "./ns:imposto/ns:PIS/ns:PISOutr/ns:pPIS"
+            ],
             "type": "float",
             "group": "imposto"
-        },
+          },
         "VLR_PIS": {
-            "path": "./ns:imposto/ns:PIS//ns:PISAliq//ns:vPIS",
+            "paths": [
+              "./ns:imposto/ns:PIS/ns:PISAliq/ns:vPIS",
+              "./ns:imposto/ns:PIS/ns:PISOutr/ns:vPIS"
+            ],
             "type": "float",
             "group": "imposto"
-        },
+          },
+      
         "CST_COFINS": {
-            "path": "./ns:imposto/ns:COFINS//ns:COFINSAliq//ns:CST",
+            "paths": [
+              "./ns:imposto/ns:COFINS/ns:COFINSAliq/ns:CST",
+              "./ns:imposto/ns:COFINS/ns:COFINSNT/ns:CST",
+              "./ns:imposto/ns:COFINS/ns:COFINSOutr/ns:CST",
+              "./ns:imposto/ns:COFINS/ns:COFINSQtde/ns:CST"
+            ],
             "type": "string",
             "length": 3,
             "group": "imposto"
         },
         "BC_COFINS": {
-            "path": "./ns:imposto/ns:COFINS//ns:COFINSAliq//ns:vBC",
+            "paths": [
+              "./ns:imposto/ns:COFINS/ns:COFINSAliq/ns:vBC",
+              "./ns:imposto/ns:COFINS/ns:COFINSOutr/ns:vBC"
+            ],
             "type": "float",
             "group": "imposto"
         },
         "ALIQ_COFINS": {
-            "path": "./ns:imposto/ns:COFINS//ns:COFINSAliq//ns:pCOFINS",
+            "paths": [
+              "./ns:imposto/ns:COFINS/ns:COFINSAliq/ns:pCOFINS",
+              "./ns:imposto/ns:COFINS/ns:COFINSOutr/ns:pCOFINS"
+            ],
             "type": "float",
             "group": "imposto"
         },
         "VLR_COFINS": {
-            "path": "./ns:imposto/ns:COFINS//ns:COFINSAliq//ns:vCOFINS",
+            "paths": [
+              "./ns:imposto/ns:COFINS/ns:COFINSAliq/ns:vCOFINS",
+              "./ns:imposto/ns:COFINS/ns:COFINSOutr/ns:vCOFINS"
+            ],
             "type": "float",
             "group": "imposto"
         },
