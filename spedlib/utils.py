@@ -53,27 +53,38 @@ def remove_efd_signature(input_efd_file, output_efd_file, encoding='latin-1'):
         print(f"Assinatura digital removida e salva em {output_efd_file}")
  
  
-def organize_xmls(source_dir_fd: str, dest_dir_fd: str, folders_map=default_folders_map):
+def organize_xmls(
+    source_dir_fd: str, 
+    dest_dir_fd: str, 
+    folders_map=default_folders_map, 
+    cnpj_emitente=None, 
+    cnpj_destinatario=None,
+    copy_files=False
+    ):
     """organiza os arquivos xml contidos em uma pasta e os move para subpastas de 
     um diretório fornecido pelo usuário """ 
     
-    def _create_folders(path: str, dest_fds_map: dict):
-        """Cria as pastas necessárias para armazenar os arquivos XML."""    
-        if not os.path.exists(path):
-            os.makedirs(path)
+    """Cria as pastas necessárias para armazenar os arquivos XML."""    
+    if not os.path.exists(dest_dir_fd):
+        os.makedirs(dest_dir_fd)
 
-        for key in dest_fds_map:
-            if not os.path.exists(f"{path}\\{dest_fds_map[key]}"):
-                os.makedirs(f"{path}\\{dest_fds_map[key]}")
+    for key in folders_map:
+        if not os.path.exists(f"{dest_dir_fd}\\{folders_map[key]}"):
+            os.makedirs(f"{dest_dir_fd}\\{folders_map[key]}")
 
-    _create_folders(dest_dir_fd, folders_map)
+    # Percorre a pasta source_dir_fd e move ou copia os arquivos xml para as pastas correspondentes
     for root, dirs, files in os.walk(source_dir_fd):
         for file in files:
             file_path = Path(root) / file
             if file.endswith('.zip'):
                 temp_folder = Path.cwd() / ''.join(random.choices(string.ascii_uppercase + string.digits, k=16))
                 extract_xmls(file_path, temp_folder)
-                organize_xmls(source_dir_fd=temp_folder, dest_dir_fd=dest_dir_fd, folders_map=folders_map)
+                organize_xmls(source_dir_fd=temp_folder, 
+                              dest_dir_fd=dest_dir_fd, 
+                              folders_map=folders_map,
+                              cnpj_emitente=cnpj_emitente, 
+                              cnpj_destinatario=cnpj_destinatario, 
+                              copy_files=copy_files)
                 shutil.rmtree(temp_folder)
             elif file.endswith('.xml'):
                 try:
@@ -81,7 +92,18 @@ def organize_xmls(source_dir_fd: str, dest_dir_fd: str, folders_map=default_fold
                     if xml_type == 'undefined':
                         print(f"Arquivo {file} não é um arquivo xml conhecido")
                     else:
-                        file_path.rename(Path(dest_dir_fd) / folders_map[xml_type] / file)
+                        dados_parceiro = get_dados_parceiro(file_path)
+                        if cnpj_emitente:
+                            if dados_parceiro['emit'].get('CNPJ') != cnpj_emitente:
+                                continue
+                        if cnpj_destinatario:
+                            if dados_parceiro['dest'].get('CNPJ', '') != cnpj_destinatario:
+                                continue
+                            
+                        if copy_files:
+                            shutil.copy(file_path, Path(dest_dir_fd) / folders_map[xml_type] / file)
+                        else:
+                            file_path.rename(Path(dest_dir_fd) / folders_map[xml_type] / file)
                 except Exception as e:
                     print(f"Erro ao processar {file}: {e}")                        
 
@@ -129,7 +151,36 @@ def get_xml_type(xml_file):
         return 'inut'
     return 'undefined'  
 
+def get_dados_parceiro(xml_path):
+    """extrai os dados do emitente e do destinatario de um arquivo xml"""
+    
+    ns = {'nfe': 'http://www.portalfiscal.inf.br/nfe'}
+    tree = ET.parse(xml_path)
+    root = tree.getroot()
 
+    def extrair_dados(tag_base):
+        tag = root.find(f'.//nfe:{tag_base}', ns)
+        if tag is None:
+            return {}
+        return {
+            'CNPJ': tag.findtext('nfe:CNPJ', default='', namespaces=ns),
+            'Nome': tag.findtext('nfe:xNome', default='', namespaces=ns),
+            'IE': tag.findtext('nfe:IE', default='', namespaces=ns),
+            'Endereço': {
+                'Logradouro': tag.findtext('nfe:ender' + tag_base.capitalize() + '/nfe:xLgr', default='', namespaces=ns),
+                'Número': tag.findtext('nfe:ender' + tag_base.capitalize() + '/nfe:nro', default='', namespaces=ns),
+                'Bairro': tag.findtext('nfe:ender' + tag_base.capitalize() + '/nfe:xBairro', default='', namespaces=ns),
+                'Município': tag.findtext('nfe:ender' + tag_base.capitalize() + '/nfe:xMun', default='', namespaces=ns),
+                'UF': tag.findtext('nfe:ender' + tag_base.capitalize() + '/nfe:UF', default='', namespaces=ns),
+                'CEP': tag.findtext('nfe:ender' + tag_base.capitalize() + '/nfe:CEP', default='', namespaces=ns),
+                'País': tag.findtext('nfe:ender' + tag_base.capitalize() + '/nfe:xPais', default='', namespaces=ns),
+            }
+        }
+
+    return {
+        'emit': extrair_dados('emit'),
+        'dest': extrair_dados('dest')
+    }
 
 
 
