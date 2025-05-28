@@ -53,59 +53,82 @@ def remove_efd_signature(input_efd_file, output_efd_file, encoding='latin-1'):
         print(f"Assinatura digital removida e salva em {output_efd_file}")
  
  
+from tqdm import tqdm
+from pathlib import Path
+import os
+import random
+import shutil
+import string
+
 def organize_xmls(
     source_dir_fd: str, 
     dest_dir_fd: str, 
-    folders_map=default_folders_map, 
+    folders_map=None, 
     cnpj_emitente=None, 
     cnpj_destinatario=None,
-    copy_files=False
-    ):
-    """organiza os arquivos xml contidos em uma pasta e os move para subpastas de 
-    um diretório fornecido pelo usuário """ 
-    
-    """Cria as pastas necessárias para armazenar os arquivos XML."""    
+    copy_files=False,
+    verbose=False
+):
+    """Organiza os arquivos XML contidos em uma pasta e os move para subpastas de 
+    um diretório fornecido pelo usuário.""" 
+
+    if folders_map is None:
+        folders_map = default_folders_map
+
+    # Criação das pastas de destino
     if not os.path.exists(dest_dir_fd):
         os.makedirs(dest_dir_fd)
 
     for key in folders_map:
-        if not os.path.exists(f"{dest_dir_fd}\\{folders_map[key]}"):
-            os.makedirs(f"{dest_dir_fd}\\{folders_map[key]}")
+        folder_path = os.path.join(dest_dir_fd, folders_map[key])
+        os.makedirs(folder_path, exist_ok=True)
 
-    # Percorre a pasta source_dir_fd e move ou copia os arquivos xml para as pastas correspondentes
+    # Lista todos os arquivos que serão processados
+    all_files = []
     for root, dirs, files in os.walk(source_dir_fd):
         for file in files:
-            file_path = Path(root) / file
-            if file.endswith('.zip'):
-                temp_folder = Path.cwd() / ''.join(random.choices(string.ascii_uppercase + string.digits, k=16))
-                extract_xmls(file_path, temp_folder)
-                organize_xmls(source_dir_fd=temp_folder, 
-                              dest_dir_fd=dest_dir_fd, 
-                              folders_map=folders_map,
-                              cnpj_emitente=cnpj_emitente, 
-                              cnpj_destinatario=cnpj_destinatario, 
-                              copy_files=copy_files)
-                shutil.rmtree(temp_folder)
-            elif file.endswith('.xml'):
-                try:
-                    xml_type = get_xml_type(file_path)
-                    if xml_type == 'undefined':
-                        print(f"Arquivo {file} não é um arquivo xml conhecido")
-                    else:
-                        dados_parceiro = get_dados_parceiro(file_path)
-                        if cnpj_emitente:
-                            if dados_parceiro['emit'].get('CNPJ') != cnpj_emitente:
-                                continue
-                        if cnpj_destinatario:
-                            if dados_parceiro['dest'].get('CNPJ', '') != cnpj_destinatario:
-                                continue
-                            
-                        if copy_files:
-                            shutil.copy(file_path, Path(dest_dir_fd) / folders_map[xml_type] / file)
-                        else:
-                            file_path.rename(Path(dest_dir_fd) / folders_map[xml_type] / file)
-                except Exception as e:
-                    print(f"Erro ao processar {file}: {e}")                        
+            all_files.append(Path(root) / file)
+
+    # Processa com barra de progresso
+    for file_path in tqdm(all_files, desc="Organizando XMLs", unit="arquivo", disable=not verbose):
+        file = file_path.name
+
+        if file.endswith('.zip'):
+            temp_folder = Path.cwd() / ''.join(random.choices(string.ascii_uppercase + string.digits, k=16))
+            extract_xmls(file_path, temp_folder)
+            organize_xmls(
+                source_dir_fd=temp_folder, 
+                dest_dir_fd=dest_dir_fd, 
+                folders_map=folders_map,
+                cnpj_emitente=cnpj_emitente, 
+                cnpj_destinatario=cnpj_destinatario, 
+                copy_files=copy_files
+            )
+            shutil.rmtree(temp_folder)
+
+        elif file.endswith('.xml'):
+            try:
+                xml_type = get_xml_type(file_path)
+                if xml_type == 'undefined':
+                    print(f"Arquivo {file} não é um arquivo xml conhecido")
+                    continue
+
+                dados_parceiro = get_dados_parceiro(file_path)
+
+                if cnpj_emitente and dados_parceiro['emit'].get('CNPJ') != cnpj_emitente:
+                    continue
+                if cnpj_destinatario and dados_parceiro['dest'].get('CNPJ', '') != cnpj_destinatario:
+                    continue
+
+                destino = Path(dest_dir_fd) / folders_map[xml_type] / file
+                if copy_files:
+                    shutil.copy(file_path, destino)
+                else:
+                    file_path.rename(destino)
+
+            except Exception as e:
+                print(f"Erro ao processar {file}: {e}")
+                      
 
 def find_all_xmls(from_path, xml_types: list = ['nfe', 'canc', 'cce', 'inut']):
     """Finds and returns a list of NFE XML files from a specified directory.
