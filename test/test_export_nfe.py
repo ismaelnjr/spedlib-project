@@ -17,13 +17,7 @@ class NFeExportTest(unittest.TestCase):
     def test_export_nfe(self):
         
         nfe_reader = NFEReader()
-        #input_dir = f"{path}\\test_data\\input\\nfe"
-<<<<<<< HEAD
-        input_dir = "C:\\temp\\MERAMA\\MBS DECOR (PINGOO)\\XML\\Filial 0001 - SP\\all"
-=======
-        input_dir = f"T:\\XML EMPRESAS ATIVAS\\ACQUALIMP\\2024\\09.2024\\SAIDAS SIEG"
->>>>>>> 0a1294c773f2311b025a755a5d97312cdcced03f
-        
+        input_dir = f"{path}\\test_data\\input\\nfe"        
         output_dir = f"{path}\\test_data\\output"
         nfe_reader.read_from_path(input_dir)
         
