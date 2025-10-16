@@ -137,6 +137,19 @@ EFD_LAYOUT = {
                      "VL_IPI",
                      "COD_OBS"], "C190 - TOTALIZADORES"],
             
+            "C195": [["C195",
+                     "COD_OBS",
+                     "TXT_COMPL"], "C195 - OBS LANÇ FISCAL"],
+            
+            "C197": [["C197",
+                     "COD_AJ",
+                     "DESCR_COMPL_AJ",
+                     "COD_ITEM",
+                     "VL_BC_ICMS",
+                     "ALIQ_ICMS",
+                     "VL_ICMS",
+                     "VL_OUTROS"], "C197 - AJUSTE DOC FISCAL"],
+            
             "D100": [["D100",
                      "IND_OPER",
                      "IND_EMIT",
@@ -324,6 +337,7 @@ class EFDReader():
         efd_C100 = pd.DataFrame(columns=EFD_LAYOUT["C100"][0])
         efd_C170 = pd.DataFrame(columns=EFD_LAYOUT["C100"][0][:8] + ["_DT_INI", "_DT_FIN"] + EFD_LAYOUT["C170"][0])
         efd_C190 = pd.DataFrame(columns=EFD_LAYOUT["C100"][0][:8] + ["_DT_INI", "_DT_FIN"] + EFD_LAYOUT["C190"][0])
+        efd_C197 = pd.DataFrame(columns=EFD_LAYOUT["C100"][0][:8] + ["_DT_INI", "_DT_FIN"] + EFD_LAYOUT["C195"][0] + EFD_LAYOUT["C197"][0])
         efd_D100 = pd.DataFrame(columns=EFD_LAYOUT["D100"][0])
         efd_D190 = pd.DataFrame(columns=EFD_LAYOUT["D100"][0][:11] + ["_DT_INI", "_DT_FIN"] + EFD_LAYOUT["D190"][0])
         efd_E100 = pd.DataFrame(columns=EFD_LAYOUT["E100"][0] + EFD_LAYOUT["E110"][0])
@@ -343,6 +357,7 @@ class EFDReader():
                            "C100" : efd_C100,
                            "C170" : efd_C170,
                            "C190" : efd_C190,
+                           "C197" : efd_C197,
                            "D100" : efd_D100,
                            "D190" : efd_D190,
                            "E100" : efd_E100,
@@ -385,6 +400,7 @@ class EFDReader():
             dt_inicio = ""
             dt_fim = ""
             row_C100 = []
+            row_C195 = []
             row_D100 = []                        
             row_E100 = []
             row_E200 = []
@@ -430,6 +446,14 @@ class EFDReader():
                         head.append(dt_fim) 
                         row = head + row[1:-1]                        
                         self._data["C190"].loc[len(self._data["C190"])] =  row 
+                    elif row[1] == "C195":
+                        row_C195 = row[1:-1]
+                    elif row[1] == "C197":   
+                        head = row_C100[:8] 
+                        head.append(dt_inicio)
+                        head.append(dt_fim) 
+                        row = head + row_C195 + row[1:-1]                        
+                        self._data["C197"].loc[len(self._data["C197"])] =  row 
                     elif row[1] == "D100":
                         row_D100 = row[1:-1]
                         row_D100.append(dt_inicio)
