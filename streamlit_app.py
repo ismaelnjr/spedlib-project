@@ -8,8 +8,8 @@ from datetime import datetime
 import tempfile
 import hashlib
 
-def create_temp_file(content, filename):
-    suffix = f"_{os.path.basename(filename)}.efd_data"
+def create_temp_file(content, filename, session_id):
+    suffix = f"_{session_id}_{os.path.basename(filename)}.efd_data"
     fd, temp_file = tempfile.mkstemp(suffix=suffix)
     os.close(fd)
 
@@ -25,7 +25,8 @@ def create_temp_file(content, filename):
 @st.cache_data
 def read_data(file_content, filename, file_hash, _progress_callback=None):
     del file_hash  # usado apenas como chave de cache
-    temp_file = create_temp_file(file_content, filename)
+    session_id = st.session_state.setdefault("session_id", hashlib.sha256(os.urandom(16)).hexdigest()[:10])
+    temp_file = create_temp_file(file_content, filename, session_id)
     try:
         reader = EFDReader(encoding="latin-1")
         reader.read_file(temp_file, progress_callback=_progress_callback)
@@ -66,10 +67,7 @@ if uploaded_file:
     try:
         file_content = uploaded_file.getvalue()
         file_hash = hashlib.sha256(file_content).hexdigest()
-
-        if st.session_state.get("last_uploaded_hash") != file_hash:
-            read_data.clear()
-            st.session_state["last_uploaded_hash"] = file_hash
+        st.session_state["last_uploaded_hash"] = file_hash
 
         progress_bar = st.progress(0)
         status_text = st.empty()
