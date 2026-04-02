@@ -2,6 +2,7 @@ from tqdm import tqdm
 from .utils import list_all_files
 import pandas as pd
 import csv
+import time
 
 
 # Registros do EFD/ICMS e respectivas colunas
@@ -394,7 +395,7 @@ class EFDReader():
 
         return self._data
 
-    def read_file(self, filename: str):
+    def read_file(self, filename: str, progress_callback=None, progress_interval: int = 500):
         try:
             linha = 1
             dt_inicio = ""
@@ -406,12 +407,32 @@ class EFDReader():
             row_E200 = []
             row_1900 = []
             row_1910 = []
-            
+            start_time = time.time()
+
+            with open(filename, 'rt', encoding=self.encoding) as count_file:
+                total_lines = sum(1 for _ in count_file)
+
+            def _notify_progress(processed_lines: int):
+                if not progress_callback:
+                    return
+
+                elapsed_seconds = max(time.time() - start_time, 0.0)
+                percent = (processed_lines / total_lines * 100) if total_lines else 100.0
+                rate = (processed_lines / elapsed_seconds) if elapsed_seconds > 0 else 0.0
+                remaining_lines = max(total_lines - processed_lines, 0)
+                eta_seconds = (remaining_lines / rate) if rate > 0 else 0.0
+
+                progress_callback(
+                    processed_lines=processed_lines,
+                    total_lines=total_lines,
+                    percent=percent,
+                    elapsed_seconds=elapsed_seconds,
+                    eta_seconds=eta_seconds,
+                )
+
             with open(filename, 'rt', encoding=self.encoding) as csvfile:
                 leitor_csv = csv.reader(csvfile, delimiter='|')
-                total_lines = sum(1 for _ in filename)
-
-                for row in tqdm(leitor_csv, desc="Lendo registros", total=total_lines, unit="linhas"):
+                for linha, row in enumerate(tqdm(leitor_csv, desc="Lendo registros", total=total_lines, unit="linhas"), start=1):
                     if row[1] == "0000":
                         self._data["0000"].loc[len(self._data["0000"])] = row[1:-1]
                         
@@ -515,7 +536,12 @@ class EFDReader():
                         head.append(dt_fim) 
                         row = head + row[1:-1]                        
                         self._data["1926"].loc[len(self._data["1926"])] =  row 
-                    linha += 1
+
+                    if linha % progress_interval == 0 or linha == total_lines:
+                        _notify_progress(linha)
+
+                if total_lines == 0:
+                    _notify_progress(0)
         except FileNotFoundError as error:
             raise RuntimeError(error)
         except Exception as e:
