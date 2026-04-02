@@ -106,7 +106,10 @@ if uploaded_file:
         dt = datetime.now().strftime("%Y%m%d%H%M%S")
         # Botão para exportar
         if st.button("Exportar para Excel"):
+            export_status = st.empty()
+            export_status.info("Gerando arquivo Excel, aguarde...")
             excel_data = export_to_excel(data, selected_records)
+            export_status.success("Arquivo Excel gerado com sucesso.")
             st.download_button(
                 label="Baixar Excel",
                 data=excel_data,
