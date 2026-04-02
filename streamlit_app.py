@@ -5,11 +5,15 @@ from spedlib.utils import remove_efd_signature
 from io import BytesIO
 import os
 from datetime import datetime
+import tempfile
+import hashlib
 
-@st.cache_resource
 def create_temp_file(content, filename):
-    temp_file = os.path.join(os.getcwd(), f"{filename}.efd_data")
-    # Salva o arquivo carregado temporariamente           
+    suffix = f"_{os.path.basename(filename)}.efd_data"
+    fd, temp_file = tempfile.mkstemp(suffix=suffix)
+    os.close(fd)
+
+    # Salva o arquivo carregado temporariamente
     with open(temp_file, "wb") as f:
         f.write(content)
 
@@ -19,10 +23,16 @@ def create_temp_file(content, filename):
     return temp_file
 
 @st.cache_data
-def read_data(file, _progress_callback=None):
-    reader = EFDReader(encoding="latin-1")
-    reader.read_file(file, progress_callback=_progress_callback)
-    return reader.data
+def read_data(file_content, filename, file_hash, _progress_callback=None):
+    del file_hash  # usado apenas como chave de cache
+    temp_file = create_temp_file(file_content, filename)
+    try:
+        reader = EFDReader(encoding="latin-1")
+        reader.read_file(temp_file, progress_callback=_progress_callback)
+        return reader.data
+    finally:
+        if temp_file and os.path.exists(temp_file):
+            os.remove(temp_file)
 
 
 def format_duration(seconds: float) -> str:
@@ -53,8 +63,14 @@ uploaded_file = st.file_uploader("Carregar arquivo SPED (.txt)", type="txt")
 if uploaded_file:
 
     # Lê o conteúdo do arquivo
-    temp_file = None
     try:
+        file_content = uploaded_file.getvalue()
+        file_hash = hashlib.sha256(file_content).hexdigest()
+
+        if st.session_state.get("last_uploaded_hash") != file_hash:
+            read_data.clear()
+            st.session_state["last_uploaded_hash"] = file_hash
+
         progress_bar = st.progress(0)
         status_text = st.empty()
         status_text.info("Iniciando leitura do arquivo...")
@@ -68,8 +84,12 @@ if uploaded_file:
                 f"Tempo decorrido: {format_duration(elapsed_seconds)}"
             )
 
-        temp_file = create_temp_file(uploaded_file.read(), uploaded_file.name)
-        data = read_data(temp_file, _progress_callback=on_progress)
+        data = read_data(
+            file_content=file_content,
+            filename=uploaded_file.name,
+            file_hash=file_hash,
+            _progress_callback=on_progress,
+        )
         progress_bar.progress(100)
         status_text.success("Leitura concluida com sucesso.")
         
@@ -95,8 +115,3 @@ if uploaded_file:
 
     except Exception as e:
         st.error(f"Erro ao processar o arquivo: {e}")
-
-    finally:
-        # Remove o arquivo temporário após o processamento
-        if os.path.exists(temp_file):
-            os.remove(temp_file)
