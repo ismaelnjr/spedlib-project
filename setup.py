@@ -7,7 +7,7 @@ def parse_requirements(filename):
     with open(filename, encoding='utf-8') as f:
         return f.read().splitlines()
     
-setup(name='spedpy',
+setup(name='spedlib',
     version=__version__,
     license='MIT License',
     author='Ismael Nascimento',
