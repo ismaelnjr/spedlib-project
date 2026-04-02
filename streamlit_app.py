@@ -61,34 +61,38 @@ st.title("Exportador de Registros SPED ICMS/IPI para Excel")
 uploaded_file = st.file_uploader("Carregar arquivo SPED (.txt)", type="txt")
 
 if uploaded_file:
-
-    # Lê o conteúdo do arquivo
     try:
         file_content = uploaded_file.getvalue()
         file_hash = hashlib.sha256(file_content).hexdigest()
-        st.session_state["last_uploaded_hash"] = file_hash
+        parsed_data = st.session_state.get("parsed_data")
 
-        progress_bar = st.progress(0)
-        status_text = st.empty()
-        status_text.info("Iniciando leitura do arquivo...")
+        # Processa novamente apenas quando o arquivo muda.
+        if st.session_state.get("last_uploaded_hash") != file_hash or parsed_data is None:
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+            status_text.info("Iniciando leitura do arquivo...")
 
-        def on_progress(processed_lines, total_lines, percent, elapsed_seconds, eta_seconds):
-            progress_value = min(max(int(percent), 0), 100)
-            progress_bar.progress(progress_value)
-            status_text.info(
-                f"Processado {processed_lines}/{total_lines} linhas ({percent:.2f}%) - "
-                f"ETA: {format_duration(eta_seconds)} - "
-                f"Tempo decorrido: {format_duration(elapsed_seconds)}"
+            def on_progress(processed_lines, total_lines, percent, elapsed_seconds, eta_seconds):
+                progress_value = min(max(int(percent), 0), 100)
+                progress_bar.progress(progress_value)
+                status_text.info(
+                    f"Processado {processed_lines}/{total_lines} linhas ({percent:.2f}%) - "
+                    f"ETA: {format_duration(eta_seconds)} - "
+                    f"Tempo decorrido: {format_duration(elapsed_seconds)}"
+                )
+
+            parsed_data = read_data(
+                file_content=file_content,
+                filename=uploaded_file.name,
+                file_hash=file_hash,
+                _progress_callback=on_progress,
             )
+            st.session_state["parsed_data"] = parsed_data
+            st.session_state["last_uploaded_hash"] = file_hash
+            progress_bar.progress(100)
+            status_text.success("Leitura concluida com sucesso.")
 
-        data = read_data(
-            file_content=file_content,
-            filename=uploaded_file.name,
-            file_hash=file_hash,
-            _progress_callback=on_progress,
-        )
-        progress_bar.progress(100)
-        status_text.success("Leitura concluida com sucesso.")
+        data = parsed_data
         
         # Lista de registros disponíveis
         available_records = list(data.keys())
