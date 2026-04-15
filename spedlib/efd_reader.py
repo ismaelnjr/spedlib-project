@@ -1,7 +1,7 @@
 from tqdm import tqdm
 from .utils import list_all_files
 import pandas as pd
-import csv
+import os
 import time
 
 
@@ -395,7 +395,21 @@ class EFDReader():
 
         return self._data
 
-    def read_file(self, filename: str, progress_callback=None, progress_interval: int = 500):
+    def _flush_buffers(self, buffers: dict[str, list[list[str]]]) -> None:
+        for registro, rows in buffers.items():
+            if not rows:
+                continue
+
+            chunk_df = pd.DataFrame.from_records(rows, columns=self._data[registro].columns)
+            if self._data[registro].empty:
+                self._data[registro] = chunk_df
+            else:
+                self._data[registro] = pd.concat(
+                    [self._data[registro], chunk_df],
+                    ignore_index=True,
+                )
+
+    def read_file(self, filename: str, progress_callback=None, progress_interval: int = 5000):
         try:
             linha = 1
             dt_inicio = ""
@@ -408,140 +422,146 @@ class EFDReader():
             row_1900 = []
             row_1910 = []
             start_time = time.time()
+            bytes_total = os.path.getsize(filename)
+            lines_processed = 0
+            bytes_processed = 0
+            last_notified_at = start_time
+            min_notify_interval = 0.5
+            buffers = {registro: [] for registro in self._data}
 
-            with open(filename, 'rt', encoding=self.encoding) as count_file:
-                total_lines = sum(1 for _ in count_file)
-
-            def _notify_progress(processed_lines: int):
+            def _notify_progress(processed_lines: int, force: bool = False):
+                nonlocal last_notified_at
                 if not progress_callback:
                     return
+                now = time.time()
+                if not force and (now - last_notified_at < min_notify_interval):
+                    return
 
-                elapsed_seconds = max(time.time() - start_time, 0.0)
-                percent = (processed_lines / total_lines * 100) if total_lines else 100.0
-                rate = (processed_lines / elapsed_seconds) if elapsed_seconds > 0 else 0.0
-                remaining_lines = max(total_lines - processed_lines, 0)
-                eta_seconds = (remaining_lines / rate) if rate > 0 else 0.0
+                last_notified_at = now
+
+                elapsed_seconds = max(now - start_time, 0.0)
+                percent = (bytes_processed / bytes_total * 100) if bytes_total else 100.0
+                bytes_rate = (bytes_processed / elapsed_seconds) if elapsed_seconds > 0 else 0.0
+                remaining_bytes = max(bytes_total - bytes_processed, 0)
+                eta_seconds = (remaining_bytes / bytes_rate) if bytes_rate > 0 else 0.0
 
                 progress_callback(
                     processed_lines=processed_lines,
-                    total_lines=total_lines,
+                    total_lines=None,
                     percent=percent,
                     elapsed_seconds=elapsed_seconds,
                     eta_seconds=eta_seconds,
                 )
 
             with open(filename, 'rt', encoding=self.encoding) as csvfile:
-                leitor_csv = csv.reader(csvfile, delimiter='|')
-                for linha, row in enumerate(tqdm(leitor_csv, desc="Lendo registros", total=total_lines, unit="linhas"), start=1):
-                    if row[1] == "0000":
-                        self._data["0000"].loc[len(self._data["0000"])] = row[1:-1]
+                for linha, raw_line in enumerate(tqdm(csvfile, desc="Lendo registros", unit="linhas"), start=1):
+                    row = raw_line.rstrip("\r\n").split("|")
+                    if len(row) < 3:
+                        continue
+
+                    registro = row[1]
+                    row_data = row[1:-1]
+
+                    if registro == "0000":
+                        buffers["0000"].append(row_data)
                         
                         # Data da escrituracao
                         dt_inicio = row[4]
                         dt_fim = row[5]
 
-                    elif row[1] == "0150":
-                        row = row[1:-1]
-                        row.append(dt_inicio)
-                        row.append(dt_fim)
-                        self._data["0150"].loc[len(self._data["0150"])] = row
-                    elif row[1] == "0200":
-                        row = row[1:-1]
-                        row.append(dt_inicio)
-                        row.append(dt_fim)
-                        self._data["0200"].loc[len(self._data["0200"])] = row
-                    elif row[1] == "C100":
-                        row_C100 = row[1:-1]
+                    elif registro == "0150":
+                        row_data.append(dt_inicio)
+                        row_data.append(dt_fim)
+                        buffers["0150"].append(row_data)
+                    elif registro == "0200":
+                        row_data.append(dt_inicio)
+                        row_data.append(dt_fim)
+                        buffers["0200"].append(row_data)
+                    elif registro == "C100":
+                        row_C100 = row_data
                         row_C100.append(dt_inicio)
                         row_C100.append(dt_fim)                               
-                        self._data["C100"].loc[len(self._data["C100"])] =  row_C100
-                    elif row[1] == "C170":   
+                        buffers["C100"].append(row_C100)
+                    elif registro == "C170":   
                         head = row_C100[:8] 
                         head.append(dt_inicio)
                         head.append(dt_fim) 
-                        row = head + row[1:-1]                        
-                        self._data["C170"].loc[len(self._data["C170"])] =  row 
-                    elif row[1] == "C190":   
+                        buffers["C170"].append(head + row_data)
+                    elif registro == "C190":   
                         head = row_C100[:8] 
                         head.append(dt_inicio)
                         head.append(dt_fim) 
-                        row = head + row[1:-1]                        
-                        self._data["C190"].loc[len(self._data["C190"])] =  row 
-                    elif row[1] == "C195":
-                        row_C195 = row[1:-1]
-                    elif row[1] == "C197":   
+                        buffers["C190"].append(head + row_data)
+                    elif registro == "C195":
+                        row_C195 = row_data
+                    elif registro == "C197":   
                         head = row_C100[:8] 
                         head.append(dt_inicio)
                         head.append(dt_fim) 
-                        row = head + row_C195 + row[1:-1]                        
-                        self._data["C197"].loc[len(self._data["C197"])] =  row 
-                    elif row[1] == "D100":
-                        row_D100 = row[1:-1]
+                        buffers["C197"].append(head + row_C195 + row_data)
+                    elif registro == "D100":
+                        row_D100 = row_data
                         row_D100.append(dt_inicio)
                         row_D100.append(dt_fim)                               
-                        self._data["D100"].loc[len(self._data["D100"])] =  row_D100
-                    elif row[1] == "D190":
+                        buffers["D100"].append(row_D100)
+                    elif registro == "D190":
                         head = row_D100[:11] 
                         head.append(dt_inicio)
                         head.append(dt_fim) 
-                        row = head + row[1:-1]                        
-                        self._data["D190"].loc[len(self._data["D190"])] =  row
-                    elif row[1] == "E100":
-                        row_E100 = row[1:-1] 
-                    elif row[1] == "E110":
-                        row = row_E100 + row[1:-1]                          
-                        self._data["E100"].loc[len(self._data["E100"])] =  row  
-                    elif row[1] == "E111":   
+                        buffers["D190"].append(head + row_data)
+                    elif registro == "E100":
+                        row_E100 = row_data
+                    elif registro == "E110":
+                        buffers["E100"].append(row_E100 + row_data)
+                    elif registro == "E111":   
                         head = []
                         head.append(dt_inicio)
                         head.append(dt_fim) 
-                        row = head + row[1:-1]                        
-                        self._data["E111"].loc[len(self._data["E111"])] =  row 
-                    elif row[1] == "E116":  
-                        row = row_E100 + row[1:-1]
-                        self._data["E116"].loc[len(self._data["E116"])] =  row      
-                    elif row[1] == "E200":
-                        row_E200 = row[1:-1] 
-                    elif row[1] == "E210":
-                        row = row_E200 + row[1:-1]                          
-                        self._data["E200"].loc[len(self._data["E200"])] =  row  
-                    elif row[1] == "E250":
-                        row = row_E200 + row[1:-1] 
-                        self._data["E250"].loc[len(self._data["E250"])] =  row 
-                    elif row[1] == "H005":
-                        row = row[1:-1]
-                        self._data["H005"].loc[len(self._data["H005"])] =  row
-                    elif row[1] == "H010":
-                        row = row[1:-1]
-                        row.append(dt_inicio)
-                        row.append(dt_fim)
-                        self._data["H010"].loc[len(self._data["H010"])] =  row
-                    elif row[1] == "1900":
-                        row_1900 = row[1:-1] 
-                    elif row[1] == "1910":
-                        row_1910 = row[1:-1] 
-                    elif row[1] == "1920":
-                        row = row_1900 + row_1910 + row[1:-1]
-                        self._data["1900"].loc[len(self._data["1900"])] =  row 
-                    elif row[1] == "1921": 
+                        buffers["E111"].append(head + row_data)
+                    elif registro == "E116":
+                        buffers["E116"].append(row_E100 + row_data)
+                    elif registro == "E200":
+                        row_E200 = row_data
+                    elif registro == "E210":
+                        buffers["E200"].append(row_E200 + row_data)
+                    elif registro == "E250":
+                        buffers["E250"].append(row_E200 + row_data)
+                    elif registro == "H005":
+                        buffers["H005"].append(row_data)
+                    elif registro == "H010":
+                        row_data.append(dt_inicio)
+                        row_data.append(dt_fim)
+                        buffers["H010"].append(row_data)
+                    elif registro == "1900":
+                        row_1900 = row_data
+                    elif registro == "1910":
+                        row_1910 = row_data
+                    elif registro == "1920":
+                        buffers["1900"].append(row_1900 + row_1910 + row_data)
+                    elif registro == "1921": 
                         # TODO A DATA DE INICIO PODE SER DIFERENTE NA SUB-APURACAO  
                         head = []
                         head.append(dt_inicio)
                         head.append(dt_fim) 
-                        row = head + row[1:-1]                        
-                        self._data["1921"].loc[len(self._data["1921"])] =  row 
-                    elif row[1] == "1926":   
+                        buffers["1921"].append(head + row_data)
+                    elif registro == "1926":   
                         head = []
                         head.append(dt_inicio)
                         head.append(dt_fim) 
-                        row = head + row[1:-1]                        
-                        self._data["1926"].loc[len(self._data["1926"])] =  row 
+                        buffers["1926"].append(head + row_data)
 
-                    if linha % progress_interval == 0 or linha == total_lines:
+                    lines_processed = linha
+                    bytes_processed += len(raw_line)
+                    if linha % progress_interval == 0:
                         _notify_progress(linha)
 
-                if total_lines == 0:
-                    _notify_progress(0)
+                bytes_processed = bytes_total
+                if lines_processed == 0:
+                    _notify_progress(0, force=True)
+                else:
+                    _notify_progress(lines_processed, force=True)
+
+            self._flush_buffers(buffers)
         except FileNotFoundError as error:
             raise RuntimeError(error)
         except Exception as e:

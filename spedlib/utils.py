@@ -3,6 +3,7 @@ import zipfile
 import random
 import string
 import shutil
+import tempfile
  
 from pathlib import Path
 import xml.etree.ElementTree as ET
@@ -37,20 +38,30 @@ def list_all_files(current_dir, file_ext):
 
 def remove_efd_signature(input_efd_file, output_efd_file, encoding='latin-1'):    
     """Remove a assinatura digital de um arquivo EFD"""
-    with open(input_efd_file, "r", encoding=encoding) as arquivo_original:
-        linhas = arquivo_original.readlines()
-    i = 0
-    for linha in linhas:
-        if linha.startswith("|9999|"):
-            break
-        else:   
-            i+=1
-        
-    # Remove a assinatura digital apos registro 9999
-    linhas = linhas[:i]
-    with open(output_efd_file, "w", encoding="latin-1") as novo_arquivo:
-        novo_arquivo.writelines(linhas)
-        print(f"Assinatura digital removida e salva em {output_efd_file}")
+    same_file = os.path.abspath(input_efd_file) == os.path.abspath(output_efd_file)
+    temp_output_file = None
+    destino = output_efd_file
+    if same_file:
+        temp_fd, temp_output_file = tempfile.mkstemp(suffix=".efd_tmp")
+        os.close(temp_fd)
+        destino = temp_output_file
+
+    try:
+        with open(input_efd_file, "r", encoding=encoding) as arquivo_original, open(
+            destino, "w", encoding=encoding
+        ) as novo_arquivo:
+            for linha in arquivo_original:
+                if linha.startswith("|9999|"):
+                    break
+                novo_arquivo.write(linha)
+
+        if same_file and temp_output_file:
+            os.replace(temp_output_file, output_efd_file)
+    finally:
+        if temp_output_file and os.path.exists(temp_output_file):
+            os.remove(temp_output_file)
+
+    print(f"Assinatura digital removida e salva em {output_efd_file}")
  
  
 from tqdm import tqdm
